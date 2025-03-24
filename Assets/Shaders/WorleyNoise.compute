@@ -1,0 +1,58 @@
+// WorleyNoise.compute
+#pragma kernel CSMain
+
+RWTexture2D<float4> Result;
+
+float cellSize;          // 单元格尺寸
+uint textureWidth;       // 纹理宽度
+uint textureHeight;      // 纹理高度
+float seed;              // 随机种子
+
+// 简单的二维 hash 函数，输出伪随机值 [0,1)
+float2 hash2d(int2 p, float seed)
+{
+    float2 fp = float2(p);
+    float a = 12.9898;
+    float b = 78.233;
+    float c = 43758.5453;
+    float dt = dot(fp, float2(a, b)) + seed;
+    float sn = sin(dt);
+    return frac(sin(float2(dt, dt + 1.0)) * c);
+}
+
+// 每个线程组 8x8
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    // 超出纹理范围则退出
+    if (id.x >= textureWidth || id.y >= textureHeight)
+        return;
+
+    // 计算当前像素在纹理中的归一化坐标和像素位置（也可以根据需求做其他坐标变换）
+    float2 uv = float2(id.x, id.y) / float2(textureWidth, textureHeight);
+    float2 pos = uv * textureWidth;
+
+    // 当前像素所属 cell
+    int2 cell = int2(floor(pos / cellSize));
+    float minDist = 1e10;
+
+    // 遍历当前 cell 邻域（3x3）
+    for (int j = -1; j <= 1; j++)
+    {
+        for (int i = -1; i <= 1; i++)
+        {
+            int2 neighborCell = cell + int2(i, j);
+            // 计算 cell 内随机位置（0~1 内偏移）:
+            float2 randomOffset = hash2d(neighborCell, seed);
+            // 计算 cell 内的随机点世界坐标
+            float2 cellPoint = (float2(neighborCell) + randomOffset) * cellSize;
+            // 计算距离
+            float d = distance(pos, cellPoint);
+            minDist = min(minDist, d);
+        }
+    }
+
+    // 归一化噪声值（此处可根据 cellSize 调整）
+    float noiseValue = minDist / cellSize;
+    Result[int2(id.x, id.y)] = float4(noiseValue, noiseValue, noiseValue, 1.0);
+}
