@@ -1,0 +1,66 @@
+#pragma kernel CSMain
+
+// 输出 3D 纹理
+RWTexture3D<float4> Result;
+
+// 纹理尺寸参数（由 C# 脚本传入）
+int textureWidth;
+int textureHeight;
+int textureDepth;
+
+// Worley Noise 参数
+float cellSize;
+float seed;
+
+// 随机偏移函数：为每个单元格生成一个随机点（范围在 [0,1] 内）
+// 利用单元格坐标和 seed 产生随机值
+float3 RandomOffset(int3 cell)
+{
+    float n = dot(float3(cell), float3(12.9898, 78.233, 37.719)) + seed;
+    float r  = frac(sin(n) * 43758.5453);
+    float r2 = frac(sin(n + 1.0) * 43758.5453);
+    float r3 = frac(sin(n + 2.0) * 43758.5453);
+    return float3(r, r2, r3);
+}
+
+[numthreads(8,8,8)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    // 超出纹理尺寸的线程直接返回
+    if (id.x >= textureWidth || id.y >= textureHeight || id.z >= textureDepth)
+        return;
+    
+    // 计算当前体素的归一化坐标 [0,1]
+    float3 uvw = float3(id.x / (float)(textureWidth - 1),
+                        id.y / (float)(textureHeight - 1),
+                        id.z / (float)(textureDepth - 1));
+    
+    // 将归一化坐标映射到噪声空间（根据 cellSize 缩放）
+    float3 pos = uvw * cellSize;
+    
+    // 获取当前体素所在的单元格索引
+    int3 cell = int3(floor(pos));
+    
+    // 初始化最小距离
+    float minDist = 1e6;
+    
+    // 遍历当前单元格及周围 3x3x3 邻域
+    for (int z = -1; z <= 1; z++)
+    {
+        for (int y = -1; y <= 1; y++)
+        {
+            for (int x = -1; x <= 1; x++)
+            {
+                int3 neighborCell = cell + int3(x, y, z);
+                // 计算邻域单元格内的特征点位置（单元格左上角 + 随机偏移）
+                float3 featurePoint = (float3(neighborCell) + RandomOffset(neighborCell));
+                // 计算噪声空间中当前点与特征点的距离
+                float d = distance(pos, featurePoint);
+                minDist = min(minDist, d);
+            }
+        }
+    }
+    
+    // 将最小距离作为灰度值写入纹理（你可以根据需求映射或处理该值）
+    Result[id] = float4(minDist, minDist, minDist, 1.0);
+}

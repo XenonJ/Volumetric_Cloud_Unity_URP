@@ -119,6 +119,59 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &760117409
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 760117411}
+  - component: {fileID: 760117412}
+  m_Layer: 0
+  m_Name: 3dWorleyNoiseGenerator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &760117411
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 760117409}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -2.7770145, y: -3.4285965, z: 4.928843}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &760117412
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 760117409}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed4b817e3ccd943d7a5a69d2c0be544b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  worleyComputeShader: {fileID: 7200000, guid: b6e72d16d41e14ad297774e6a060a4ca, type: 3}
+  textureWidth: 128
+  textureHeight: 128
+  textureDepth: 128
+  cellSize: 8
+  seed: 0
+  sliceMaterial: {fileID: 2100000, guid: cbb15a214237440d8aeb0eda854c50ea, type: 2}
+  displayPreview: 1
+  autoRecompute: 1
 --- !u!1 &1354816168
 GameObject:
   m_ObjectHideFlags: 0
@@ -388,3 +441,4 @@ SceneRoots:
   - {fileID: 1354816171}
   - {fileID: 2088860972}
   - {fileID: 1752325908}
+  - {fileID: 760117411}
