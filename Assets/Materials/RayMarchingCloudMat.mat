@@ -117,7 +117,7 @@ Material:
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
     - _CloudDensity: 5
-    - _CloudSpeed: 1
+    - _CloudSpeed: 0.01
     - _Cull: 2
     - _Cutoff: 0.5
     - _DensityThreshold: 4.94
