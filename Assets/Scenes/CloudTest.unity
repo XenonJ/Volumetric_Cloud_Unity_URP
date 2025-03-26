@@ -206,7 +206,7 @@ Transform:
   m_GameObject: {fileID: 298884596}
   serializedVersion: 2
   m_LocalRotation: {x: 0.31598538, y: -0.3596048, z: 0.13088542, w: 0.8681629}
-  m_LocalPosition: {x: 9.7, y: 22, z: -30.8}
+  m_LocalPosition: {x: 27.07, y: 27.12, z: -27.15}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -286,6 +286,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   worleyComputeShader: {fileID: 7200000, guid: b6e72d16d41e14ad297774e6a060a4ca, type: 3}
+  perlinComputeShader: {fileID: 7200000, guid: ca6c819352548478d8f76cdfec566612, type: 3}
+  perlinWorleyComputeShader: {fileID: 7200000, guid: c11e81bb72fea40c9876e9538b1d52de, type: 3}
+  usePerlinNoise: 0
+  useWorleyNoise: 1
+  usePerlinWorleyNoise: 0
   textureWidth: 128
   textureHeight: 128
   textureDepth: 128
@@ -593,7 +598,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: 1b09594a70f9845459660eb775f69ad1, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

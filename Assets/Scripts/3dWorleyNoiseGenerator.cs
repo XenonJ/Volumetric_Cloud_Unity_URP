@@ -8,6 +8,13 @@ public class WorleyNoiseGenerator3D : MonoBehaviour
 {
     [Header("Compute Shader 设置")]
     public ComputeShader worleyComputeShader;
+    public ComputeShader perlinComputeShader;
+    public ComputeShader perlinWorleyComputeShader;
+
+    [Header("噪声类型")]
+    public bool usePerlinNoise = false;
+    public bool useWorleyNoise = true;
+    public bool usePerlinWorleyNoise = false;
     
     [Header("纹理尺寸")]
     public int textureWidth = 64;
@@ -82,21 +89,36 @@ public class WorleyNoiseGenerator3D : MonoBehaviour
         volumeTexture.wrapMode = TextureWrapMode.Repeat;
         volumeTexture.filterMode = FilterMode.Bilinear;
         volumeTexture.Create();
+
+        // 选择噪声类型
+        ComputeShader selectedComputeShader = worleyComputeShader;
+        if (usePerlinNoise)
+        {
+            selectedComputeShader = perlinComputeShader;
+        }
+        else if (useWorleyNoise)
+        {
+            selectedComputeShader = worleyComputeShader;
+        }
+        else if (usePerlinWorleyNoise)
+        {
+            selectedComputeShader = perlinWorleyComputeShader;
+        }
         
         // 设置 compute shader 参数
-        int kernelHandle = worleyComputeShader.FindKernel("CSMain");
-        worleyComputeShader.SetInt("textureWidth", textureWidth);
-        worleyComputeShader.SetInt("textureHeight", textureHeight);
-        worleyComputeShader.SetInt("textureDepth", textureDepth);
-        worleyComputeShader.SetFloat("cellSize", cellSize);
-        worleyComputeShader.SetFloat("seed", seed);
-        worleyComputeShader.SetTexture(kernelHandle, "Result", volumeTexture);
+        int kernelHandle = selectedComputeShader.FindKernel("CSMain");
+        selectedComputeShader.SetInt("textureWidth", textureWidth);
+        selectedComputeShader.SetInt("textureHeight", textureHeight);
+        selectedComputeShader.SetInt("textureDepth", textureDepth);
+        selectedComputeShader.SetFloat("cellSize", cellSize);
+        selectedComputeShader.SetFloat("seed", seed);
+        selectedComputeShader.SetTexture(kernelHandle, "Result", volumeTexture);
         
         // Dispatch 计算（注意：不要在 Update 中持续调用）
         int threadGroupsX = Mathf.CeilToInt(textureWidth / 8.0f);
         int threadGroupsY = Mathf.CeilToInt(textureHeight / 8.0f);
         int threadGroupsZ = Mathf.CeilToInt(textureDepth / 8.0f);
-        worleyComputeShader.Dispatch(kernelHandle, threadGroupsX, threadGroupsY, threadGroupsZ);
+        selectedComputeShader.Dispatch(kernelHandle, threadGroupsX, threadGroupsY, threadGroupsZ);
     }
 
     // 在屏幕右上角绘制 3x3 的切片预览（仅当 displayPreview 为 true 时）

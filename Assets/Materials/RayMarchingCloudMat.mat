@@ -107,7 +107,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AccumulateThreshold: 0.1
+    - _AccumulateThreshold: 0.95
     - _AddPrecomputedVelocity: 0
     - _AlphaClip: 0
     - _AlphaToMask: 0
@@ -120,7 +120,7 @@ Material:
     - _CloudSpeed: 1
     - _Cull: 2
     - _Cutoff: 0.5
-    - _DensityThreshold: 5
+    - _DensityThreshold: 4.94
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
@@ -131,13 +131,13 @@ Material:
     - _Glossiness: 0
     - _GlossyReflections: 0
     - _Metallic: 0
-    - _NoiseThreshold: 0.25
+    - _NoiseThreshold: 0.24
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _SampleJitter: 0.18
-    - _SampleRange: 1
+    - _SampleJitter: 0.3
+    - _SampleRange: 1.19
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
