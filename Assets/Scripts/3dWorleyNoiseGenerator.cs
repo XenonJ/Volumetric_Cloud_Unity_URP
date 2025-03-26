@@ -17,6 +17,14 @@ public class WorleyNoiseGenerator3D : MonoBehaviour
     [Header("Worley Noise 参数")]
     public float cellSize = 8.0f;
     public float seed = 0.0f;
+    [Tooltip("噪声类型: 0=纯Worley, 1=Perlin-Worley混合")]
+    public int noiseType = 0;
+    [Range(0, 1)]
+    public float perlinInfluence = 0.5f;
+    [Range(1, 8)]
+    public int octaves = 1;
+    [Range(0, 1)]
+    public float persistence = 0.5f;
     
     [Header("切片预览材质（使用下面给出的 Slice3DShader）")]
     public Material sliceMaterial;
@@ -90,6 +98,10 @@ public class WorleyNoiseGenerator3D : MonoBehaviour
         worleyComputeShader.SetInt("textureDepth", textureDepth);
         worleyComputeShader.SetFloat("cellSize", cellSize);
         worleyComputeShader.SetFloat("seed", seed);
+        worleyComputeShader.SetInt("noiseType", noiseType);
+        worleyComputeShader.SetFloat("perlinInfluence", perlinInfluence);
+        worleyComputeShader.SetInt("octaves", octaves);
+        worleyComputeShader.SetFloat("persistence", persistence);
         worleyComputeShader.SetTexture(kernelHandle, "Result", volumeTexture);
         
         // Dispatch 计算（注意：不要在 Update 中持续调用）
@@ -148,6 +160,21 @@ public class WorleyNoiseGenerator3D : MonoBehaviour
         {
             volumeTexture.Release();
             volumeTexture = null;
+        }
+    }
+
+    // 添加一个公共方法，允许其他脚本获取生成的纹理
+    public RenderTexture GetVolumeTexture()
+    {
+        return volumeTexture;
+    }
+    
+    // 添加一个方法，允许其他脚本（如RayMarchingCloud_BoxSetter）更新云体积
+    public void UpdateCloudVolume(Material targetMaterial)
+    {
+        if (volumeTexture != null && targetMaterial != null)
+        {
+            targetMaterial.SetTexture("_VolumeTex", volumeTexture);
         }
     }
 }

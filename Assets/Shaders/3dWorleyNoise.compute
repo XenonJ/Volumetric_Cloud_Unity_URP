@@ -11,56 +11,226 @@ int textureDepth;
 // Worley Noise 参数
 float cellSize;
 float seed;
+int pointsPerCell = 4; // 每个单元格内的特征点数量
+float smoothness = 1.0;  // 噪声平滑度
+float distortion = 0.2;  // 噪声扰动强度
 
-// 随机偏移函数：为每个单元格生成一个随机点（范围在 [0,1] 内）
-// 利用单元格坐标和 seed 产生随机值
-float3 RandomOffset(int3 cell)
+// 新增参数
+int noiseType = 0;       // 0=纯Worley, 1=Perlin-Worley混合
+float perlinInfluence = 0.5;
+int octaves = 1;
+float persistence = 0.5;
+
+// 伪随机数生成
+float3 hash33(float3 p)
 {
-    float n = dot(float3(cell), float3(12.9898, 78.233, 37.719)) + seed;
-    float r  = frac(sin(n) * 43758.5453);
-    float r2 = frac(sin(n + 1.0) * 43758.5453);
-    float r3 = frac(sin(n + 2.0) * 43758.5453);
-    return float3(r, r2, r3);
+    float3 q = float3(
+        dot(p, float3(127.1, 311.7, 74.7)),
+        dot(p, float3(269.5, 183.3, 246.1)),
+        dot(p, float3(113.5, 271.9, 124.6))
+    );
+    
+    return frac(sin(q) * 43758.5453123);
+}
+
+// 值噪声函数 - 用于生成扰动
+float valueNoise(float3 p)
+{
+    float3 i = floor(p);
+    float3 f = frac(p);
+    
+    // 立方体8个顶点的伪随机值
+    float a = hash33(i).x;
+    float b = hash33(i + float3(1, 0, 0)).x;
+    float c = hash33(i + float3(0, 1, 0)).x;
+    float d = hash33(i + float3(1, 1, 0)).x;
+    float e = hash33(i + float3(0, 0, 1)).x;
+    float f1 = hash33(i + float3(1, 0, 1)).x;
+    float g = hash33(i + float3(0, 1, 1)).x;
+    float h = hash33(i + float3(1, 1, 1)).x;
+    
+    // Smoothstep插值
+    float3 u = f * f * (3.0 - 2.0 * f);
+    
+    // 三线性插值
+    return lerp(
+        lerp(lerp(a, b, u.x), lerp(c, d, u.x), u.y),
+        lerp(lerp(e, f1, u.x), lerp(g, h, u.x), u.y), 
+        u.z
+    );
+}
+
+// Perlin 噪声函数 - 用于混合
+float perlinNoise(float3 p)
+{
+    float3 i = floor(p);
+    float3 f = frac(p);
+    
+    // 平滑插值
+    float3 u = f * f * (3.0 - 2.0 * f);
+    
+    // 8个顶点的梯度
+    float n000 = dot(hash33(i) * 2.0 - 1.0, f);
+    float n100 = dot(hash33(i + float3(1, 0, 0)) * 2.0 - 1.0, f - float3(1, 0, 0));
+    float n010 = dot(hash33(i + float3(0, 1, 0)) * 2.0 - 1.0, f - float3(0, 1, 0));
+    float n110 = dot(hash33(i + float3(1, 1, 0)) * 2.0 - 1.0, f - float3(1, 1, 0));
+    float n001 = dot(hash33(i + float3(0, 0, 1)) * 2.0 - 1.0, f - float3(0, 0, 1));
+    float n101 = dot(hash33(i + float3(1, 0, 1)) * 2.0 - 1.0, f - float3(1, 0, 1));
+    float n011 = dot(hash33(i + float3(0, 1, 1)) * 2.0 - 1.0, f - float3(0, 1, 1));
+    float n111 = dot(hash33(i + float3(1, 1, 1)) * 2.0 - 1.0, f - float3(1, 1, 1));
+    
+    // 三线性插值
+    return 0.5 + 0.5 * lerp(
+        lerp(lerp(n000, n100, u.x), lerp(n010, n110, u.x), u.y),
+        lerp(lerp(n001, n101, u.x), lerp(n011, n111, u.x), u.y),
+        u.z
+    );
+}
+
+// 分形Perlin噪声
+float fractalPerlinNoise(float3 p, int octaves, float persistence)
+{
+    float total = 0.0;
+    float frequency = 1.0;
+    float amplitude = 1.0;
+    float maxValue = 0.0;
+    
+    for(int i = 0; i < octaves; i++) {
+        total += perlinNoise(p * frequency) * amplitude;
+        maxValue += amplitude;
+        amplitude *= persistence;
+        frequency *= 2.0;
+    }
+    
+    return total / maxValue;
+}
+
+// 生成指定单元格内的特征点
+float3 getCellPoint(int3 cellIndex, int pointIndex)
+{
+    // 单元格的基础坐标
+    float3 cellPos = float3(cellIndex);
+    
+    // 使用不同的种子值计算每个特征点
+    float pointSeed = seed + pointIndex * 1000.0;
+    
+    // 生成随机点的位置（确保点完全位于单元格内，不靠近边界）
+    float3 hashInput = float3(cellIndex.x, cellIndex.y, cellIndex.z) + pointSeed;
+    float3 pointOffset = hash33(hashInput);
+    
+    // 确保点在单元格内合理分布（不要太靠近边界）
+    pointOffset = lerp(0.1, 0.9, pointOffset);
+    
+    return cellPos + pointOffset;
+}
+
+// 平滑最小值函数 - 增加平滑过渡
+float smoothMin(float a, float b, float k)
+{
+    float h = max(k - abs(a - b), 0.0) / k;
+    return min(a, b) - h * h * k * 0.25;
+}
+
+float3 mod(float3 x, float3 y)
+{
+    return x - y * floor(x / y);
 }
 
 [numthreads(8,8,8)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     // 超出纹理尺寸的线程直接返回
-    if (id.x >= textureWidth || id.y >= textureHeight || id.z >= textureDepth)
+    if (id.x >= (uint)textureWidth || id.y >= (uint)textureHeight || id.z >= (uint)textureDepth)
         return;
     
     // 计算当前体素的归一化坐标 [0,1]
-    float3 uvw = float3(id.x / (float)(textureWidth - 1),
-                        id.y / (float)(textureHeight - 1),
-                        id.z / (float)(textureDepth - 1));
+    float3 uvw = float3(id.x / (float)(textureWidth), 
+                        id.y / (float)(textureHeight),
+                        id.z / (float)(textureDepth));
     
-    // 将归一化坐标映射到噪声空间（根据 cellSize 缩放）
+    // 应用扰动 - 打破网格状规律
+    if (distortion > 0.0) {
+        float3 distortionOffset = float3(
+            valueNoise(uvw * 3.0 + seed),
+            valueNoise(uvw * 3.0 + seed + 100.0),
+            valueNoise(uvw * 3.0 + seed + 200.0)
+        ) * 2.0 - 1.0; // 范围 [-1, 1]
+        
+        uvw += distortionOffset * distortion * 0.1; // 小幅扰动
+    }
+    
+    // 将归一化坐标映射到噪声空间
     float3 pos = uvw * cellSize;
     
-    // 获取当前体素所在的单元格索引
-    int3 cell = int3(floor(pos));
+    // 获取当前位置所在的单元格索引
+    int3 baseCell = floor(pos);
     
-    // 初始化最小距离
-    float minDist = 1e6;
+    // 初始化最小距离数组
+    float distances[3] = { 1e10, 1e10, 1e10 };
     
-    // 遍历当前单元格及周围 3x3x3 邻域
-    for (int z = -1; z <= 1; z++)
-    {
-        for (int y = -1; y <= 1; y++)
-        {
-            for (int x = -1; x <= 1; x++)
-            {
-                int3 neighborCell = cell + int3(x, y, z);
-                // 计算邻域单元格内的特征点位置（单元格左上角 + 随机偏移）
-                float3 featurePoint = (float3(neighborCell) + RandomOffset(neighborCell));
-                // 计算噪声空间中当前点与特征点的距离
-                float d = distance(pos, featurePoint);
-                minDist = min(minDist, d);
+    // 遍历当前单元格及其周围 3x3x3 邻域
+    for (int z = -1; z <= 1; z++) {
+        for (int y = -1; y <= 1; y++) {
+            for (int x = -1; x <= 1; x++) {
+                int3 cellOffset = int3(x, y, z);
+                int3 neighborCell = baseCell + cellOffset;
+                
+                // 搜索此单元格内的所有特征点
+                for (int p = 0; p < pointsPerCell; p++) {
+                    float3 featurePoint = getCellPoint(neighborCell, p);
+                    
+                    // 为了确保纹理边界的无缝连接，我们需要考虑"环绕"效果
+                    // 将特征点位置调整为与当前单元格相关的位置
+                    float3 wrappedFeaturePoint = featurePoint;
+                    
+                    // 计算到特征点的距离
+                    float d = distance(pos, wrappedFeaturePoint);
+                    
+                    // 更新最小距离数组（总是保持有序）
+                    if (d < distances[0]) {
+                        distances[2] = distances[1];
+                        distances[1] = distances[0];
+                        distances[0] = d;
+                    } else if (d < distances[1]) {
+                        distances[2] = distances[1];
+                        distances[1] = d;
+                    } else if (d < distances[2]) {
+                        distances[2] = d;
+                    }
+                }
             }
         }
     }
     
-    // 将最小距离作为灰度值写入纹理（你可以根据需求映射或处理该值）
-    Result[id] = float4(minDist, minDist, minDist, 1.0);
+    // 应用平滑
+    if (smoothness > 0.0) {
+        distances[0] = smoothMin(distances[0], distances[1], smoothness * 2.0);
+    }
+    
+    // 使用F1或F1-F2差值作为噪声值
+    float noiseValue;
+    
+    // 基础F1 (到最近点的距离)
+    float f1 = distances[0] / cellSize;
+    
+    // F2-F1 (到第二近点与最近点的距离差)
+    float f2_f1 = (distances[1] - distances[0]) / cellSize;
+    
+    // 混合F1和F2-F1 (可调整混合比例)
+    noiseValue = lerp(f1, f2_f1, 0.5);
+    
+    // 标准化噪声值到 [0,1] 范围
+    noiseValue = 1.0 - saturate(noiseValue); // 反转值，使特征点附近为白色
+    
+    // 如果启用了Perlin-Worley混合
+    if (noiseType == 1) {
+        float perlinValue = fractalPerlinNoise(pos * 0.1, octaves, persistence);
+        noiseValue = lerp(noiseValue, perlinValue, perlinInfluence);
+    }
+    
+    // 确保值在合理范围内
+    noiseValue = saturate(noiseValue);
+    
+    // 写入结果 (所有通道相同值，但确保alpha为1)
+    Result[id] = float4(noiseValue, noiseValue, noiseValue, 1.0);
 }

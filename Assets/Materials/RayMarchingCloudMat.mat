@@ -115,17 +115,24 @@ Material:
     - _BumpScale: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
+    - _CloudSharpness: 1
     - _Cull: 2
     - _Cutoff: 0.5
+    - _DensityMultiplier: 1
+    - _DensityThreshold: 1.2
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
+    - _DetailStrength: 0.5
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EnvironmentReflections: 1
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
+    - _HeightFalloff: 2
+    - _MaxSteps: 64
     - _Metallic: 0
+    - _NoiseScale: 1
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _QueueOffset: 0
@@ -137,14 +144,19 @@ Material:
     - _SrcBlendAlpha: 1
     - _StepCount: 10
     - _Surface: 0
+    - _TimeScale: 1
+    - _TransparencyThreshold: 0.1
+    - _TurbulenceScale: 0.5
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _BoxMax: {r: 0.5, g: 0.5, b: 0.5, a: 0}
-    - _BoxMin: {r: -0.5, g: -0.5, b: -0.5, a: 0}
-    - _Color: {r: 1, g: 1, b: 1, a: 0.49019608}
+    - _BoxMax: {r: 2.5, g: 2.39, b: 2.5, a: 0}
+    - _BoxMin: {r: -2.5, g: -2.45, b: -2.5, a: 0}
+    - _Color: {r: 0.4528302, g: 0.43360627, b: 0.43360627, a: 0.49019608}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _FlowDirection: {r: 1, g: 0, b: 0.5, a: 0}
+    - _FlowSpeed: {r: 0.1, g: 0.05, b: 0.08, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

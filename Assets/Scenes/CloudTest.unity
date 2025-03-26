@@ -289,8 +289,12 @@ MonoBehaviour:
   textureWidth: 128
   textureHeight: 128
   textureDepth: 128
-  cellSize: 8
-  seed: 0
+  cellSize: 16
+  seed: 2
+  noiseType: 1
+  perlinInfluence: 1
+  octaves: 8
+  persistence: 0.84
   sliceMaterial: {fileID: 2100000, guid: cbb15a214237440d8aeb0eda854c50ea, type: 2}
   displayPreview: 1
   autoRecompute: 1
@@ -443,6 +447,7 @@ GameObject:
   - component: {fileID: 1144810353}
   - component: {fileID: 1144810352}
   - component: {fileID: 1144810350}
+  - component: {fileID: 1144810355}
   m_Layer: 0
   m_Name: Cloud
   m_TagString: Untagged
@@ -530,6 +535,39 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1144810355
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1144810349}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23cd0de6104f694459ff78514ef3ad80, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  flowSpeed: {x: 0.1, y: 0.05, z: 0.08}
+  timeScale: 1.37
+  flowDirection: {x: 0.9262353, y: -0.036011394, z: 0.37522176}
+  turbulenceScale: 0
+  densityThreshold: 0.16
+  densityMultiplier: 0.8
+  cloudSharpness: 1.5
+  detailStrength: 0.68
+  noiseScale: 3.44
+  heightFalloff: 3.8
+  stepCount: 34
+  maxSteps: 64
+  transparencyThreshold: 0.096
+  enableDirectionChange: 0
+  directionChangePeriod: 20
+  directionChangeAmount: 0.34
+  applyCumulusPreset: 0
+  applyStratocumulusPreset: 0
+  applyCirrusPreset: 0
+  applyLowPerformancePreset: 0
+  applyHighPerformancePreset: 0
 --- !u!1 &1306109821
 GameObject:
   m_ObjectHideFlags: 0
