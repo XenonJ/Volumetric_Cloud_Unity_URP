@@ -1,0 +1,95 @@
+#pragma kernel CSMain
+
+RWTexture3D<float4> Result;
+int textureWidth;
+int textureHeight;
+int textureDepth;
+
+// Perlin Noise 参数：
+// cellSize 作为噪声空间的周期（建议传入整数值）
+// seed 用于生成随机梯度
+float cellSize;
+float seed;
+
+// 辅助函数：模运算
+int modInt(int a, int b) {
+    int r = a % b;
+    return r < 0 ? r + b : r;
+}
+
+int3 wrap(int3 v, int period) {
+    return int3(modInt(v.x, period), modInt(v.y, period), modInt(v.z, period));
+}
+
+// Fade 插值函数
+float fade(float t) {
+    return t * t * t * (t * (t * 6 - 15) + 10);
+}
+
+// 随机梯度生成函数：返回单位向量
+float3 randomGradient(int3 cell)
+{
+    float n = dot(float3(cell), float3(12.9898, 78.233, 37.719)) + seed;
+    float r  = frac(sin(n) * 43758.5453);
+    float r2 = frac(sin(n + 1.0) * 43758.5453);
+    float r3 = frac(sin(n + 2.0) * 43758.5453);
+    return normalize(float3(r, r2, r3) * 2.0 - 1.0);
+}
+
+[numthreads(8,8,8)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= textureWidth || id.y >= textureHeight || id.z >= textureDepth)
+        return;
+        
+    // 归一化采样坐标 [0,1)
+    float3 uvw = float3(id.x / (float)textureWidth,
+                        id.y / (float)textureHeight,
+                        id.z / (float)textureDepth);
+                        
+    // 噪声空间坐标（周期为 cellSize）
+    float3 pos = uvw * cellSize;
+    int period = (int)cellSize;
+    
+    // 计算所在单元格及局部坐标
+    int3 cell = int3(floor(pos));
+    float3 f = pos - float3(cell);
+    
+    // 计算 Fade 插值权重
+    float u = fade(f.x);
+    float v = fade(f.y);
+    float w = fade(f.z);
+    
+    // 取 8 个角点（对索引取模实现连续性），注意对上角点距离应为 (f - 1)
+    int3 c000 = wrap(cell + int3(0,0,0), period);
+    int3 c100 = wrap(cell + int3(1,0,0), period);
+    int3 c010 = wrap(cell + int3(0,1,0), period);
+    int3 c110 = wrap(cell + int3(1,1,0), period);
+    int3 c001 = wrap(cell + int3(0,0,1), period);
+    int3 c101 = wrap(cell + int3(1,0,1), period);
+    int3 c011 = wrap(cell + int3(0,1,1), period);
+    int3 c111 = wrap(cell + int3(1,1,1), period);
+    
+    float n000 = dot(randomGradient(c000), f - float3(0,0,0));
+    float n100 = dot(randomGradient(c100), f - float3(1,0,0));
+    float n010 = dot(randomGradient(c010), f - float3(0,1,0));
+    float n110 = dot(randomGradient(c110), f - float3(1,1,0));
+    float n001 = dot(randomGradient(c001), f - float3(0,0,1));
+    float n101 = dot(randomGradient(c101), f - float3(1,0,1));
+    float n011 = dot(randomGradient(c011), f - float3(0,1,1));
+    float n111 = dot(randomGradient(c111), f - float3(1,1,1));
+    
+    // 三线性插值
+    float nx00 = lerp(n000, n100, u);
+    float nx10 = lerp(n010, n110, u);
+    float nx01 = lerp(n001, n101, u);
+    float nx11 = lerp(n011, n111, u);
+    float nxy0 = lerp(nx00, nx10, v);
+    float nxy1 = lerp(nx01, nx11, v);
+    float noise = lerp(nxy0, nxy1, w);
+    
+    // 将结果归一化到 [0,1]（Perlin noise 原始范围大致为 [-1,1]）
+    noise = (noise + 1.0) * 0.5;
+    
+    Result[id] = float4(noise, noise, noise, 1.0);
+}

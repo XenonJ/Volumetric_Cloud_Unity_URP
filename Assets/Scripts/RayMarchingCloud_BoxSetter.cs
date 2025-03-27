@@ -5,6 +5,8 @@ public class RayMarchingCloud_BoxSetter : MonoBehaviour
     private Renderer _renderer;
     private MaterialPropertyBlock _propBlock;
 
+    private int frameCounter = 0;
+
     void Awake()
     {
         _renderer = GetComponent<Renderer>();
@@ -20,6 +22,8 @@ public class RayMarchingCloud_BoxSetter : MonoBehaviour
     {
         // 每帧更新_BoxMin和_BoxMax
         SetBoxProperties();
+        frameCounter++;
+        SetFrameCounter();
     }
 
     // 也可以在Editor里实时更新（便于调试）
@@ -44,6 +48,13 @@ public class RayMarchingCloud_BoxSetter : MonoBehaviour
         _propBlock.SetVector("_BoxMax", transform.position + transform.localScale / 2);
 
         // 应用PropertyBlock到Renderer
+        _renderer.SetPropertyBlock(_propBlock);
+    }
+
+    void SetFrameCounter()
+    {
+        _renderer.GetPropertyBlock(_propBlock);
+        _propBlock.SetInt("_FrameCounter", frameCounter);
         _renderer.SetPropertyBlock(_propBlock);
     }
 }
