@@ -108,6 +108,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _AccumulateThreshold: 0.95
+    - _AccumulateThresholdUpperBound: 3
     - _AddPrecomputedVelocity: 0
     - _AlphaClip: 0
     - _AlphaToMask: 0

@@ -11,6 +11,7 @@ Shader "Custom/RayMarchingCloud"
         _NoiseThreshold ("Noise Threshold", Float) = 0.4
         _DensityThreshold ("Cloud Density", Float) = 0.8
         _AccumulateThreshold ("Accumulate Threshold", Float) = 0.2
+        _AccumulateThresholdUpperBound ("Accumulate Threshold Upper Bound", Float) = 1.0
         _CloudSpeed ("Cloud Speed", Float) = 1.0
         _FrameCounter ("Frame Counter", Float) = 0
         _SampleRange ("Sample Range", Float) = 1.0
@@ -38,6 +39,7 @@ Shader "Custom/RayMarchingCloud"
             float _NoiseThreshold;
             float _DensityThreshold;
             float _AccumulateThreshold;
+            float _AccumulateThresholdUpperBound;
             float _CloudSpeed;
             float _FrameCounter;
             float _SampleRange;
@@ -191,6 +193,9 @@ Shader "Custom/RayMarchingCloud"
                 // 简单阈值判断，低密度部分不参与显示
                 if (densityAccum < _AccumulateThreshold)
                     densityAccum = 0.0;
+                // 设定累积密度的上限
+                if (densityAccum > _AccumulateThresholdUpperBound)
+                    densityAccum = _AccumulateThresholdUpperBound;
 
                 float3 finalColor = densityAccum * _Color.rgb;
                 return float4(finalColor, saturate(densityAccum * _Color.a));
