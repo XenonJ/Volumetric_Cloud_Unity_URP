@@ -16,6 +16,8 @@ Shader "Custom/RayMarchingCloud"
         _FrameCounter ("Frame Counter", Float) = 0
         _SampleRange ("Sample Range", Float) = 1.0
         _SampleJitter ("Sample Jitter", Float) = 0.1
+        // 新增：光源方向（世界空间），请确保传入归一化的方向
+        _LightDir ("Light Direction", Vector) = (0,1,0,0)
     }
     SubShader
     {
@@ -44,6 +46,7 @@ Shader "Custom/RayMarchingCloud"
             float _FrameCounter;
             float _SampleRange;
             float _SampleJitter;
+            float4 _LightDir;  // 新增光源方向（使用 float4 以便属性传值）
 
             // 用于判断浮点比较的边界偏移
             float epsilon = 0.02;
@@ -157,7 +160,7 @@ Shader "Custom/RayMarchingCloud"
             }
 
             /////////////////////////////////
-            // 片元着色器：沿射线采样计算累积密度并生成最终颜色
+            // 片元着色器：沿射线采样计算累积密度、光照散射贡献并生成最终颜色
             /////////////////////////////////
             float4 frag (Varyings IN) : SV_Target
             {
@@ -172,7 +175,14 @@ Shader "Custom/RayMarchingCloud"
 
                 float t = tNearFar.x;
                 float stepSize = (tNearFar.y - tNearFar.x) / _StepCount;
+                
+                // 初始化积分变量
                 float densityAccum = 0.0;
+                float3 scatteringAccum = float3(0.0, 0.0, 0.0);
+                float transmittance = 1.0;
+
+                // 归一化光源方向（从 _LightDir 的 xyzw 取 xyz 部分）
+                float3 lightDir = normalize(_LightDir.xyz);
 
                 // 沿射线均匀采样
                 for (int i = 0; i < _StepCount; i++)
@@ -186,19 +196,38 @@ Shader "Custom/RayMarchingCloud"
                     {
                         float distanceFromCamera = length(samplePos - camPos);
                         float density = GetDensity(samplePos, distanceFromCamera);
+                        
+                        // 累加密度（用于后续透明度计算）
                         densityAccum += density * stepSize;
+                        
+                        // 单步采样计算光照衰减
+                        // 设定一个固定的采样距离来估计光线衰减
+                        const float shadowStep = 0.1;
+                        float3 shadowSamplePos = samplePos + lightDir * shadowStep;
+                        float densityShadow = GetDensity(shadowSamplePos, distanceFromCamera + shadowStep);
+                        float T_light = exp(-densityShadow * shadowStep);
+
+                        // 简单的散射相函数，使用光线与视线方向的夹角（cosine 权重）
+                        float phase = saturate(dot(lightDir, rayDir));
+                        float scattering = density * T_light * phase;
+
+                        // 累加散射贡献，同时考虑沿视线的透射率
+                        scatteringAccum += transmittance * scattering * stepSize;
+                        // 更新视线透射率（Beer-Lambert 衰减）
+                        transmittance *= exp(-density * stepSize);
                     }
                 }
 
-                // 简单阈值判断，低密度部分不参与显示
+                // 简单阈值判断：低密度区域不显示
                 if (densityAccum < _AccumulateThreshold)
                     densityAccum = 0.0;
-                // 设定累积密度的上限
                 if (densityAccum > _AccumulateThresholdUpperBound)
                     densityAccum = _AccumulateThresholdUpperBound;
 
-                float3 finalColor = densityAccum * _Color.rgb;
-                return float4(finalColor, saturate(densityAccum * _Color.a));
+                // 最终颜色由散射积分与基础色调组合；透明度可依据累计密度或 1 - transmittance 计算
+                float3 finalColor = scatteringAccum * _Color.rgb;
+                float finalAlpha = saturate(densityAccum * _Color.a);
+                return float4(finalColor, finalAlpha);
             }
             ENDHLSL
         }
