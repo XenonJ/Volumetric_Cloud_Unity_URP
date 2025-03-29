@@ -18,7 +18,7 @@ public class RayMarchingCloud_BoxSetter : MonoBehaviour
         SetBoxProperties();
     }
 
-    void Update()
+    void FixedUpdate()
     {
         // 每帧更新_BoxMin和_BoxMax
         SetBoxProperties();
