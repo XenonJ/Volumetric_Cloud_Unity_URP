@@ -29,7 +29,7 @@ Material:
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
+  m_CustomRenderQueue: 3000
   stringTagMap: {}
   disabledShaderPasses:
   - MOTIONVECTORS
@@ -108,6 +108,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _AccumulateThreshold: 0.95
+    - _AccumulateThresholdUpperBound: 3
     - _AddPrecomputedVelocity: 0
     - _AlphaClip: 0
     - _AlphaToMask: 0
@@ -120,7 +121,8 @@ Material:
     - _CloudSpeed: 0.01
     - _Cull: 2
     - _Cutoff: 0.5
-    - _DensityThreshold: 4.94
+    - _DarknessThreshold: 0.1
+    - _DensityThreshold: 3
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
@@ -130,14 +132,20 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
+    - _GroundHeight: -0.5
+    - _GroundReflectFalloff: 2
+    - _GroundReflectIntensity: 0.2
+    - _LightAbsorptionThroughCloud: 0.5
+    - _LightAbsorptionTowardSun: 0.5
     - _Metallic: 0
-    - _NoiseThreshold: 0.24
+    - _NoiseThreshold: 0.1
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _SampleJitter: 0.3
-    - _SampleRange: 1.19
+    - _SampleJitter: 0.2
+    - _SampleRange: 0.8
+    - _ShadowStepCount: 3
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
@@ -152,8 +160,14 @@ Material:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _BoxMax: {r: 0.5, g: 0.5, b: 0.5, a: 0}
     - _BoxMin: {r: -0.5, g: -0.5, b: -0.5, a: 0}
-    - _Color: {r: 1, g: 1, b: 1, a: 0.49019608}
+    - _Color: {r: 0.99872833, g: 1, b: 0.8726415, a: 0.49019608}
+    - _DarkColor: {r: 0.7735849, g: 0.7735849, b: 0.7735849, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _GroundReflectColor: {r: 0.5, g: 0.7, b: 1, a: 1}
+    - _LightColor0: {r: 1, g: 1, b: 1, a: 1}
+    - _LightDir: {r: -0.2138072, g: -0.9010771, b: 0.37728834, a: 0}
+    - _LightPos: {r: 0, g: 1, b: 0, a: 0}
+    - _PhaseParams: {r: 0.5, g: 0.5, b: 0, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
