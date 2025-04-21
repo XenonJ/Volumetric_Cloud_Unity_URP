@@ -151,7 +151,7 @@ Material:
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
-    - _StepCount: 10
+    - _StepCount: 36
     - _Surface: 0
     - _Threshold: 0.2
     - _WorkflowMode: 1
