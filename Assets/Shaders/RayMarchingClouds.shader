@@ -19,6 +19,7 @@ Shader "Custom/RayMarchingCloudIntegrated_NoBg"
         _LightAbsorptionThroughCloud ("Light Absorption Through Cloud", Float) = 0.5
         _DarknessThreshold ("Darkness Threshold", Float) = 0.1
         _PhaseParams ("Phase Params", Vector) = (0.5, 0.5, 0.0, 1.0)
+        _LightSteps ("Light Steps", Int) = 16
     }
     SubShader
     {
@@ -32,6 +33,9 @@ Shader "Custom/RayMarchingCloudIntegrated_NoBg"
             #pragma fragment frag
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            #define MAX_STEPS 128
+            #define MAX_LIGHT_STEPS 16
 
             // 属性声明
             int _StepCount;
@@ -52,6 +56,7 @@ Shader "Custom/RayMarchingCloudIntegrated_NoBg"
             float _LightAbsorptionThroughCloud;
             float _DarknessThreshold;
             float4 _PhaseParams;
+            int _LightSteps;
 
             // 用于浮点比较的微小偏移
             float epsilon = 0.02;
@@ -179,15 +184,19 @@ Shader "Custom/RayMarchingCloudIntegrated_NoBg"
                 float3 dirToLight = normalize(_LightDir.xyz);
                 float2 tBox = IntersectAABB(position, dirToLight, _BoxMin.xyz, _BoxMax.xyz);
                 float dstInsideBox = tBox.y;
-                int lightSteps = 16;
-                float stepSize = dstInsideBox / lightSteps;
+                float stepSize = dstInsideBox / _LightSteps;
                 float totalDensity = 0.0;
                 float3 pos = position;
-                for (int i = 0; i < lightSteps; i++)
+                [loop]
+                for (int i = 0; i < MAX_LIGHT_STEPS; i++)
                 {
+                    if (i >= _LightSteps)
+                        break;
                     pos += dirToLight * stepSize;
                     float density = GetDensity(pos, length(pos - _WorldSpaceCameraPos));
                     totalDensity += max(0.0, density * stepSize);
+                    if (totalDensity > 1.0)
+                        break;
                 }
                 float transmittance = exp(-totalDensity * _LightAbsorptionTowardSun);
                 return _DarknessThreshold + transmittance * (1.0 - _DarknessThreshold);
@@ -216,8 +225,11 @@ Shader "Custom/RayMarchingCloudIntegrated_NoBg"
                 float phaseVal = PhaseFunction(cosAngle);
                 
                 // 沿射线均匀采样
-                for (int i = 0; i < _StepCount; i++)
+                [loop]
+                for (int i = 0; i < MAX_STEPS; i++)
                 {
+                    if (i >= _StepCount)
+                        break;
                     t += stepSize;
                     float3 samplePos = camPos + rayDir * t;
                     // 添加随机抖动，减少采样伪影
@@ -236,6 +248,11 @@ Shader "Custom/RayMarchingCloudIntegrated_NoBg"
                             float lightTransmittance = LightMarch(samplePos);
                             lightEnergy += density * stepSize * transmittance * lightTransmittance * phaseVal;
                             transmittance *= exp(-density * stepSize * _LightAbsorptionThroughCloud);
+                        }
+
+                        if (transmittance < 0.01)
+                        {
+                            break;
                         }
                     }
                 }
