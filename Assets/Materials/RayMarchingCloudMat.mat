@@ -137,6 +137,7 @@ Material:
     - _GroundReflectIntensity: 0.2
     - _LightAbsorptionThroughCloud: 0.5
     - _LightAbsorptionTowardSun: 0.5
+    - _LightSteps: 16
     - _Metallic: 0
     - _NoiseThreshold: 0.1
     - _OcclusionStrength: 1

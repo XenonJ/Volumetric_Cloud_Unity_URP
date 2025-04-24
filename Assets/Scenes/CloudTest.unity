@@ -388,9 +388,9 @@ MonoBehaviour:
   usePerlinNoise: 1
   useWorleyNoise: 1
   usePerlinWorleyNoise: 0
-  textureWidth: 128
-  textureHeight: 128
-  textureDepth: 128
+  textureWidth: 32
+  textureHeight: 32
+  textureDepth: 32
   cellSize: 8
   seed: 0
   sliceMaterial: {fileID: 2100000, guid: cbb15a214237440d8aeb0eda854c50ea, type: 2}
